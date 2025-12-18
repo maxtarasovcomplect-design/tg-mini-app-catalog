@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог материалов | Комплект</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-book-open"></i> Архив полезных материалов</h1>
+            <p class="subtitle">Все самое ценное из нашего канала — структурировано и под рукой</p>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Поиск по названию или описанию...">
+            </div>
+            <div class="category-filter">
+                <button class="cat-btn active" data-category="all">Все</button>
+                <!-- Категории будут добавлены скриптом -->
+            </div>
+        </header>
+
+        <main>
+            <div id="loader">
+                <div class="spinner"></div>
+                <p>Загружаем каталог...</p>
+            </div>
+            <div id="materialsContainer" class="materials-grid">
+                <!-- Карточки будут вставлены сюда скриптом -->
+            </div>
+            <div id="noResults" class="no-results">
+                <i class="fas fa-inbox"></i>
+                <h3>Ничего не найдено</h3>
+                <p>Попробуйте изменить запрос или выбрать другую категорию</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>Канал <strong>«Комплект»</strong> — работа для каждого и надёжные услуги для вашего бизнеса.</p>
+            <p class="tip"><i class="fas fa-lightbulb"></i> Чтобы поделиться материалом, просто нажмите на кнопку "Открыть"</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
