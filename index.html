@@ -3,44 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Каталог материалов | Комплект</title>
+    <title>Комплект | Каталог и Игра</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1><i class="fas fa-book-open"></i> Архив полезных материалов</h1>
-            <p class="subtitle">Все самое ценное из нашего канала — структурировано и под рукой</p>
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Поиск по названию или описанию...">
-            </div>
-            <div class="category-filter">
-                <button class="cat-btn active" data-category="all">Все</button>
-                <!-- Категории будут добавлены скриптом -->
-            </div>
-        </header>
+        <!-- Вкладки для переключения -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="catalog">
+                <i class="fas fa-book"></i> Каталог
+            </button>
+            <button class="tab-btn" data-tab="game">
+                <i class="fas fa-gamepad"></i> Кликер
+            </button>
+        </div>
 
-        <main>
-            <div id="loader">
-                <div class="spinner"></div>
-                <p>Загружаем каталог...</p>
+        <!-- Содержимое каталога (скрыто по умолчанию для игры) -->
+        <div id="catalogTab" class="tab-content active">
+            <header>
+                <h1><i class="fas fa-book-open"></i> Архив полезных материалов</h1>
+                <p class="subtitle">Все самое ценное из нашего канала — структурировано и под рукой</p>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Поиск по названию или описанию...">
+                </div>
+                <div class="category-filter">
+                    <button class="cat-btn active" data-category="all">Все</button>
+                </div>
+            </header>
+
+            <main>
+                <div id="loader">
+                    <div class="spinner"></div>
+                    <p>Загружаем каталог...</p>
+                </div>
+                <div id="materialsContainer" class="materials-grid"></div>
+                <div id="noResults" class="no-results">
+                    <i class="fas fa-inbox"></i>
+                    <h3>Ничего не найдено</h3>
+                    <p>Попробуйте изменить запрос или выбрать другую категорию</p>
+                </div>
+            </main>
+        </div>
+
+        <!-- Содержимое игры (изначально скрыто) -->
+        <div id="gameTab" class="tab-content">
+            <div class="game-container">
+                <div class="game-header">
+                    <h2><i class="fas fa-bolt"></i> ТАПЕР</h2>
+                    <p class="game-subtitle">Нажимай как можно быстрее!</p>
+                </div>
+
+                <div class="score-display">
+                    <div class="score-circle">
+                        <span id="score">0</span>
+                        <div class="score-label">ОЧКОВ</div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span id="cps">0.0</span>
+                            <small>кликов/сек</small>
+                        </div>
+                        <div class="stat">
+                            <i class="fas fa-crown"></i>
+                            <span id="highScore">0</span>
+                            <small>рекорд</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="click-area" id="clickButton">
+                    <div class="click-inner">
+                        <i class="fas fa-hand-pointer"></i>
+                        <div class="click-text">ЖМИ СЮДА!</div>
+                        <div class="click-hint">Чем быстрее, тем лучше</div>
+                    </div>
+                    <div class="click-effect" id="clickEffect"></div>
+                </div>
+
+                <div class="game-controls">
+                    <button class="control-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i> Сбросить
+                    </button>
+                    <button class="control-btn" id="autoClickBtn">
+                        <i class="fas fa-robot"></i> Автоклик (10 сек)
+                    </button>
+                    <button class="control-btn" id="multiplierBtn">
+                        <i class="fas fa-times"></i> x2 (50 очков)
+                    </button>
+                </div>
+
+                <div class="game-instructions">
+                    <h3><i class="fas fa-info-circle"></i> Как играть?</h3>
+                    <ul>
+                        <li>Нажимай на красную кнопку для увеличения счета</li>
+                        <li>Зарабатывай очки для улучшений</li>
+                        <li>Попробуй побить свой рекорд!</li>
+                    </ul>
+                </div>
             </div>
-            <div id="materialsContainer" class="materials-grid">
-                <!-- Карточки будут вставлены сюда скриптом -->
-            </div>
-            <div id="noResults" class="no-results">
-                <i class="fas fa-inbox"></i>
-                <h3>Ничего не найдено</h3>
-                <p>Попробуйте изменить запрос или выбрать другую категорию</p>
-            </div>
-        </main>
+        </div>
 
         <footer>
             <p>Канал <strong>«Комплект»</strong> — работа для каждого и надёжные услуги для вашего бизнеса.</p>
-            <p class="tip"><i class="fas fa-lightbulb"></i> Чтобы поделиться материалом, просто нажмите на кнопку "Открыть"</p>
+            <p class="tip"><i class="fas fa-lightbulb"></i> Переключайтесь между вкладками вверху</p>
         </footer>
     </div>
 
