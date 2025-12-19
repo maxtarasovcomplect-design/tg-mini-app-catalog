@@ -1,21 +1,38 @@
-// Инициализация Telegram WebApp
+// ==================== ОБЩАЯ ИНИЦИАЛИЗАЦИЯ ====================
 const tg = window.Telegram.WebApp;
-tg.expand(); // Раскрываем приложение на весь экран
+tg.expand();
 tg.setHeaderColor('#2481cc');
 tg.setBackgroundColor('#f5f7fa');
 
-// Элементы DOM
-const materialsContainer = document.getElementById('materialsContainer');
-const searchInput = document.getElementById('searchInput');
-const categoryFilter = document.querySelector('.category-filter');
-const loader = document.getElementById('loader');
-const noResults = document.getElementById('noResults');
+// ==================== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ====================
+function initTabs() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.getAttribute('data-tab');
+            
+            // Убираем активный класс у всех кнопок и контента
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Добавляем активный класс выбранной кнопке и контенту
+            button.classList.add('active');
+            document.getElementById(`${tabId}Tab`).classList.add('active');
+            
+            // Если переключились на каталог и он еще не загружен
+            if (tabId === 'catalog' && allMaterials.length === 0) {
+                loadMaterials();
+            }
+        });
+    });
+}
 
-// Переменные состояния
+// ==================== ЛОГИКА КАТАЛОГА ====================
 let allMaterials = [];
 let activeCategory = 'all';
 
-// Загрузка данных из data.json
 async function loadMaterials() {
     try {
         const response = await fetch('./data.json');
@@ -24,32 +41,34 @@ async function loadMaterials() {
         allMaterials = await response.json();
         displayMaterials(allMaterials);
         generateCategoryButtons(allMaterials);
-        loader.style.display = 'none';
+        document.getElementById('loader').style.display = 'none';
     } catch (error) {
         console.error('Ошибка загрузки:', error);
-        materialsContainer.innerHTML = `
+        document.getElementById('materialsContainer').innerHTML = `
             <div class="error-message">
                 <i class="fas fa-exclamation-triangle"></i>
                 <h3>Ошибка загрузки каталога</h3>
-                <p>Попробуйте обновить страницу или проверьте подключение к интернету</p>
+                <p>Попробуйте обновить страницу</p>
             </div>
         `;
-        loader.style.display = 'none';
+        document.getElementById('loader').style.display = 'none';
     }
 }
 
-// Отображение материалов
 function displayMaterials(materials) {
+    const container = document.getElementById('materialsContainer');
+    const noResults = document.getElementById('noResults');
+    
     if (materials.length === 0) {
-        materialsContainer.style.display = 'none';
+        container.style.display = 'none';
         noResults.style.display = 'block';
         return;
     }
     
-    materialsContainer.style.display = 'grid';
+    container.style.display = 'grid';
     noResults.style.display = 'none';
     
-    materialsContainer.innerHTML = materials.map(material => `
+    container.innerHTML = materials.map(material => `
         <div class="material-card">
             <div class="card-header">
                 <span class="card-category">${material.category}</span>
@@ -67,18 +86,17 @@ function displayMaterials(materials) {
     `).join('');
 }
 
-// Генерация кнопок категорий
 function generateCategoryButtons(materials) {
     const categories = ['all', ...new Set(materials.map(item => item.category))];
+    const container = document.querySelector('.category-filter');
     
-    categoryFilter.innerHTML = categories.map(cat => `
+    container.innerHTML = categories.map(cat => `
         <button class="cat-btn ${cat === 'all' ? 'active' : ''}" 
                 data-category="${cat}">
             ${cat === 'all' ? 'Все' : cat}
         </button>
     `).join('');
     
-    // Обработчики для кнопок категорий
     document.querySelectorAll('.cat-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -89,31 +107,25 @@ function generateCategoryButtons(materials) {
     });
 }
 
-// Фильтрация по категории и поиску
 function filterMaterials() {
     let filtered = allMaterials;
     
-    // Фильтр по категории
     if (activeCategory !== 'all') {
         filtered = filtered.filter(item => item.category === activeCategory);
     }
     
-    // Фильтр по поисковому запросу
-    const searchTerm = searchInput.value.toLowerCase();
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     if (searchTerm) {
         filtered = filtered.filter(item => 
             item.title.toLowerCase().includes(searchTerm) || 
-            item.description.toLowerCase().includes(searchTerm) ||
-            item.category.toLowerCase().includes(searchTerm)
+            item.description.toLowerCase().includes(searchTerm)
         );
     }
     
     displayMaterials(filtered);
 }
 
-// Открытие материала
 function openMaterial(link) {
-    // Открываем ссылку в Telegram или браузере
     if (tg.platform !== 'unknown') {
         tg.openLink(link);
     } else {
@@ -121,24 +133,191 @@ function openMaterial(link) {
     }
 }
 
-// Инициализация поиска
-searchInput.addEventListener('input', filterMaterials);
-
-// Запуск загрузки при открытии страницы
-document.addEventListener('DOMContentLoaded', loadMaterials);
-
-// Добавляем стили для сообщения об ошибке
-const style = document.createElement('style');
-style.textContent = `
-    .error-message {
-        text-align: center;
-        padding: 40px 20px;
-        color: #e74c3c;
-        grid-column: 1 / -1;
+// ==================== ЛОГИКА ИГРЫ-КЛИКЕРА ====================
+class ClickerGame {
+    constructor() {
+        this.score = 0;
+        this.highScore = localStorage.getItem('clickerHighScore') || 0;
+        this.multiplier = 1;
+        this.clickTimes = [];
+        this.autoClickActive = false;
+        
+        this.scoreElement = document.getElementById('score');
+        this.highScoreElement = document.getElementById('highScore');
+        this.cpsElement = document.getElementById('cps');
+        this.clickButton = document.getElementById('clickButton');
+        this.clickEffect = document.getElementById('clickEffect');
+        this.resetBtn = document.getElementById('resetBtn');
+        this.autoClickBtn = document.getElementById('autoClickBtn');
+        this.multiplierBtn = document.getElementById('multiplierBtn');
+        
+        this.init();
     }
-    .error-message i {
-        font-size: 3rem;
-        margin-bottom: 20px;
+    
+    init() {
+        this.updateDisplay();
+        
+        // Обработчик клика по кнопке
+        this.clickButton.addEventListener('click', (e) => {
+            this.handleClick(e);
+        });
+        
+        // Обработчик сброса
+        this.resetBtn.addEventListener('click', () => {
+            this.resetGame();
+        });
+        
+        // Обработчик автоклика
+        this.autoClickBtn.addEventListener('click', () => {
+            this.activateAutoClick();
+        });
+        
+        // Обработчик множителя
+        this.multiplierBtn.addEventListener('click', () => {
+            this.buyMultiplier();
+        });
+        
+        // Обновляем CPS каждую секунду
+        setInterval(() => {
+            this.updateCPS();
+        }, 1000);
     }
-`;
-document.head.appendChild(style);
+    
+    handleClick(event) {
+        // Добавляем очки
+        this.score += this.multiplier;
+        
+        // Записываем время клика для расчета CPS
+        this.clickTimes.push(Date.now());
+        
+        // Обновляем отображение
+        this.updateDisplay();
+        
+        // Создаем эффект клика
+        this.createClickEffect(event);
+        
+        // Проверяем рекорд
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            localStorage.setItem('clickerHighScore', this.highScore);
+        }
+        
+        // Обновляем доступность улучшений
+        this.updateUpgrades();
+    }
+    
+    createClickEffect(event) {
+        const rect = this.clickButton.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        this.clickEffect.style.left = `${x}px`;
+        this.clickEffect.style.top = `${y}px`;
+        this.clickEffect.style.opacity = '1';
+        this.clickEffect.style.transform = 'scale(0)';
+        
+        setTimeout(() => {
+            this.clickEffect.style.transform = 'scale(2)';
+            this.clickEffect.style.opacity = '0';
+        }, 10);
+        
+        // Анимация увеличения счета
+        this.scoreElement.style.transform = 'scale(1.1)';
+        setTimeout(() => {
+            this.scoreElement.style.transform = 'scale(1)';
+        }, 100);
+    }
+    
+    updateDisplay() {
+        this.scoreElement.textContent = this.score;
+        this.highScoreElement.textContent = this.highScore;
+        this.multiplierBtn.innerHTML = `<i class="fas fa-times"></i> x${this.multiplier * 2} (${this.getMultiplierCost()} очков)`;
+    }
+    
+    updateCPS() {
+        // Удаляем старые клики (старше 5 секунд)
+        const now = Date.now();
+        this.clickTimes = this.clickTimes.filter(time => now - time < 5000);
+        
+        // Рассчитываем CPS
+        const cps = this.clickTimes.length / 5;
+        this.cpsElement.textContent = cps.toFixed(1);
+        
+        // Автокликер
+        if (this.autoClickActive) {
+            this.score += this.multiplier;
+            this.updateDisplay();
+        }
+    }
+    
+    updateUpgrades() {
+        // Блокируем кнопки, если не хватает очков
+        this.autoClickBtn.disabled = this.score < 100;
+        this.multiplierBtn.disabled = this.score < this.getMultiplierCost();
+    }
+    
+    getMultiplierCost() {
+        return 50 * Math.pow(2, this.multiplier - 1);
+    }
+    
+    resetGame() {
+        this.score = 0;
+        this.multiplier = 1;
+        this.clickTimes = [];
+        this.autoClickActive = false;
+        this.autoClickBtn.disabled = false;
+        this.updateDisplay();
+        this.updateUpgrades();
+    }
+    
+    activateAutoClick() {
+        if (this.score >= 100 && !this.autoClickActive) {
+            this.score -= 100;
+            this.autoClickActive = true;
+            this.autoClickBtn.disabled = true;
+            this.autoClickBtn.innerHTML = '<i class="fas fa-robot"></i> Активно (10 сек)';
+            this.updateDisplay();
+            
+            // Автокликер работает 10 секунд
+            setTimeout(() => {
+                this.autoClickActive = false;
+                this.autoClickBtn.innerHTML = '<i class="fas fa-robot"></i> Автоклик (10 сек)';
+                this.updateUpgrades();
+            }, 10000);
+        }
+    }
+    
+    buyMultiplier() {
+        const cost = this.getMultiplierCost();
+        if (this.score >= cost) {
+            this.score -= cost;
+            this.multiplier *= 2;
+            this.updateDisplay();
+            this.updateUpgrades();
+            
+            // Эффект покупки
+            this.multiplierBtn.style.background = 'linear-gradient(135deg, #2ed573, #1dd1a1)';
+            setTimeout(() => {
+                this.multiplierBtn.style.background = 'linear-gradient(135deg, #ff9f43, #ffaf40)';
+            }, 300);
+        }
+    }
+}
+
+// ==================== ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ====================
+document.addEventListener('DOMContentLoaded', () => {
+    // Инициализируем переключение вкладок
+    initTabs();
+    
+    // Загружаем каталог (по умолчанию активна вкладка каталога)
+    loadMaterials();
+    
+    // Инициализируем игру
+    const game = new ClickerGame();
+    
+    // Инициализируем поиск в каталоге
+    document.getElementById('searchInput').addEventListener('input', filterMaterials);
+    
+    // Сообщаем Telegram, что приложение готово
+    tg.ready();
+});
